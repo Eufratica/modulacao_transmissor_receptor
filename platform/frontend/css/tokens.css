@@ -1,0 +1,463 @@
+/* ============================================================================
+ * 4-QAM LAB — OBSIDIAN SCADA DESIGN SYSTEM & ACCESSIBILITY TOKENS
+ * ============================================================================
+ * Inspirado em cockpit SCADA industrial de alta legibilidade:
+ *   - Cyber Escuro (padrao de bancada: obsidian #030508 + indigo #4f46e5 + cyan/emerald)
+ *   - SCADA Alto Contraste (ambar #ffb000 + ciano sobre preto puro)
+ *   - Claro (bancada muito iluminada: #eef2f7 + cartoes #ffffff + indigo #4f46e5)
+ * Zero dependencias externas; funciona 100% offline.
+ * ============================================================================ */
+
+:root {
+  color-scheme: dark;
+
+  /* Superficies em profundidade (elevacao vs cavidade/poco) */
+  --app-bg: #030508;
+  --app-bg-image:
+    radial-gradient(ellipse 85% 50% at 50% -10%, rgba(79, 70, 229, 0.16), transparent 68%),
+    radial-gradient(circle at 90% 12%, rgba(34, 211, 238, 0.08), transparent 42%),
+    linear-gradient(180deg, #030508 0%, #010204 100%);
+  --app-text: #f1f5f9;
+
+  --surface-raised: #080c14;
+  --surface-sub: #0d121e;
+  --surface-well: #020306;
+  --surface-overlay: #070b13;
+  --surface-header: #04070e;
+  --surface-btn: #080c15;
+  --surface-btn-hover: #101829;
+  --surface-hover: #111828;
+
+  /* Micro-bordas e realces tateis */
+  --border-raised: #131b28;
+  --border-sub: #172235;
+  --border-well: #101622;
+  --border-strong: #1f2c44;
+  --border-btn: #162033;
+  --border-btn-hover: #293b59;
+  --border-glow: rgba(34, 211, 238, 0.45);
+  --focus-ring: #22d3ee;
+
+  /* Sombras tateis sem vidro fosco */
+  --shadow-raised:
+    0 4px 20px -2px rgba(0, 0, 0, 0.85),
+    0 2px 6px -1px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-well:
+    inset 0 2px 6px rgba(0, 0, 0, 0.95),
+    inset 0 1px 1px rgba(0, 0, 0, 0.98),
+    0 1px 0 rgba(255, 255, 255, 0.03);
+  --shadow-header: 0 4px 18px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-overlay:
+    0 28px 60px -10px rgba(0, 0, 0, 0.98),
+    0 12px 24px -5px rgba(0, 0, 0, 0.92),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --overlay-dim: rgba(1, 2, 5, 0.88);
+
+  --btn-card-bg: linear-gradient(180deg, #0e1422 0%, #070a13 100%);
+  --btn-card-bg-hover: linear-gradient(180deg, #141d30 0%, #0a0f1a 100%);
+  --btn-card-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+  --btn-card-shadow-hover:
+    0 6px 14px -2px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+
+  /* Acentos e Tipografia WCAG AA (>= 4.58:1) */
+  --text-strong: #f1f5f9;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #8a99b2;
+
+  --accent-indigo: #4f46e5;
+  --accent-indigo-bright: #6366f1;
+  --btn-primary-fg: #ffffff;
+  --cyan-luminous: #22d3ee;
+  --cyan-soft: #38bdf8;
+  --ok: #10b981;
+  --ok-bright: #34d399;
+  --warn: #f59e0b;
+  --err: #fb7185;
+  --violet: #a78bfa;
+
+  /* Badges tintados */
+  --tint-emerald: #021a12; --tint-emerald-bd: #064e3b; --tint-emerald-fg: #34d399;
+  --tint-cyan: #031a24;    --tint-cyan-bd: #0e526e;    --tint-cyan-fg: #22d3ee;
+  --tint-indigo: #0a0e29;  --tint-indigo-bd: #283585;  --tint-indigo-fg: #a5b4fc;
+  --tint-purple: #150826;  --tint-purple-bd: #4c1d95;  --tint-purple-fg: #c084fc;
+  --tint-amber: #1c1003;   --tint-amber-bd: #6b3f0b;   --tint-amber-fg: #fbbf24;
+  --tint-rose: #22050c;    --tint-rose-bd: #6b1427;    --tint-rose-fg: #fb7185;
+
+  /* Tokens para Canvas & SVG */
+  --canvas-bg: #020306;
+  --canvas-grid: #111c2f;
+  --canvas-axis: #8a99b2;
+  --canvas-zero: #2b3b55;
+  --conduit-base: #070b13;
+  --conduit-rail: #151e30;
+
+  /* Compatibilidade legada */
+  --bg-canvas: var(--app-bg);
+  --bg-surface: var(--surface-header);
+  --bg-card: var(--surface-raised);
+  --bg-sub: var(--surface-sub);
+  --bg: var(--app-bg);
+  --border: var(--border-raised);
+  --border-subtle: var(--border-raised);
+  --text: var(--text-strong);
+  --muted: var(--text-muted);
+  --tx: var(--cyan-soft);
+  --rx: var(--ok-bright);
+  --ref: var(--warn);
+
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "Cascadia Code", "Consolas", "Courier New", monospace;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --transition: 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- Tema SCADA Industrial Alto Contraste (Ambar + Ciano / Preto) ---------- */
+body.theme-scada-industrial {
+  --app-bg: #010204;
+  --app-bg-image: radial-gradient(ellipse 80% 45% at 50% 0%, rgba(255, 176, 0, 0.08), transparent 65%), linear-gradient(180deg, #020305 0%, #000000 100%);
+  --surface-raised: #060910;
+  --surface-sub: #0b0f19;
+  --surface-well: #010203;
+  --surface-overlay: #060910;
+  --surface-header: #04060b;
+  --surface-btn: #090c14;
+  --surface-btn-hover: #141008;
+  --surface-hover: #141108;
+
+  --border-raised: rgba(255, 176, 0, 0.42);
+  --border-sub: rgba(255, 176, 0, 0.28);
+  --border-well: rgba(255, 176, 0, 0.24);
+  --border-strong: rgba(255, 176, 0, 0.56);
+  --border-btn: rgba(255, 176, 0, 0.34);
+  --border-btn-hover: rgba(255, 176, 0, 0.75);
+  --border-glow: #ffb000;
+  --focus-ring: #ffb000;
+
+  --text-strong: #fffbeb;
+  --text-primary: #fffbeb;
+  --text-secondary: #fde68a;
+  --text-muted: #c2b59b;
+
+  --accent-indigo: #f59e0b;
+  --accent-indigo-bright: #fbbf24;
+  --btn-primary-fg: #010204;
+  --canvas-bg: #010204;
+  --canvas-grid: rgba(255, 176, 0, 0.16);
+  --canvas-axis: #fcd34d;
+  --canvas-zero: rgba(255, 176, 0, 0.35);
+  --conduit-rail: #261905;
+}
+
+/* ---------- Tema Claro (Bancada muito iluminada) ---------- */
+body.theme-light {
+  color-scheme: light;
+  --app-bg: #eef2f7;
+  --app-bg-image: radial-gradient(ellipse 90% 55% at 50% -15%, rgba(79, 70, 229, 0.09), transparent 70%), linear-gradient(180deg, #f4f6fa 0%, #e9eef5 100%);
+  --app-text: #0f172a;
+
+  --surface-raised: #ffffff;
+  --surface-sub: #f4f6fa;
+  --surface-well: #f8fafc;
+  --surface-overlay: #ffffff;
+  --surface-header: #ffffff;
+  --surface-btn: #ffffff;
+  --surface-btn-hover: #f1f5f9;
+  --surface-hover: #e8edf4;
+
+  --border-raised: #dbe2ec;
+  --border-sub: #d5dde8;
+  --border-well: #cbd5e1;
+  --border-strong: #b4c2d4;
+  --border-btn: #d5dde8;
+  --border-btn-hover: #8fa1ba;
+  --border-glow: #4f46e5;
+  --focus-ring: #4f46e5;
+
+  --shadow-raised: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 14px -4px rgba(15, 23, 42, 0.10);
+  --shadow-well: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+  --shadow-header: 0 1px 0 #dbe2ec, 0 4px 12px -6px rgba(15, 23, 42, 0.12);
+  --shadow-overlay: 0 24px 48px -12px rgba(15, 23, 42, 0.28), 0 8px 16px -8px rgba(15, 23, 42, 0.16);
+  --overlay-dim: rgba(15, 23, 42, 0.45);
+
+  --btn-card-bg: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+  --btn-card-bg-hover: linear-gradient(180deg, #ffffff 0%, #eef2f8 100%);
+  --btn-card-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --btn-card-shadow-hover: 0 6px 16px -6px rgba(15, 23, 42, 0.18);
+
+  --text-strong: #0f172a;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #526075;
+
+  --cyan-luminous: #0284c7;
+  --cyan-soft: #0369a1;
+  --ok: #059669;
+  --ok-bright: #047857;
+  --warn: #b45309;
+  --err: #be123c;
+  --violet: #6d28d9;
+
+  --tint-emerald: #ecfdf5; --tint-emerald-bd: #a7f3d0; --tint-emerald-fg: #047857;
+  --tint-cyan: #ecfeff;    --tint-cyan-bd: #a5f3fc;    --tint-cyan-fg: #0e7490;
+  --tint-indigo: #eef2ff;  --tint-indigo-bd: #c7d2fe;  --tint-indigo-fg: #4338ca;
+  --tint-purple: #faf5ff;  --tint-purple-bd: #e9d5ff;  --tint-purple-fg: #7e22ce;
+  --tint-amber: #fffbeb;   --tint-amber-bd: #fde68a;   --tint-amber-fg: #92400e;
+  --tint-rose: #fff1f2;    --tint-rose-bd: #fecdd3;    --tint-rose-fg: #be123c;
+
+  --canvas-bg: #f8fafc;
+  --canvas-grid: #e2e8f0;
+  --canvas-axis: #475569;
+  --canvas-zero: #94a3b8;
+  --conduit-base: #e2e8f0;
+  --conduit-rail: #cbd5e1;
+}
+
+/* ---------- Escala de Fonte Acessivel ---------- */
+html.font-sm { font-size: 14px; }
+html.font-md { font-size: 16px; }
+html.font-lg { font-size: 18px; }
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  color: var(--app-text);
+  background-color: var(--app-bg);
+  background-image: var(--app-bg-image);
+  background-attachment: fixed;
+  font-family: var(--sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Barras de rolagem discretas estilo SCADA */
+*::-webkit-scrollbar { width: 9px; height: 9px; background: transparent; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(138, 153, 178, 0.25);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background-color: rgba(138, 153, 178, 0.55); }
+
+/* Acessibilidade: Skip Link & Focus Ring universal */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+.skip-link {
+  position: fixed; left: -9999px; top: 8px; z-index: 200;
+  background: var(--accent-indigo); color: #fff;
+  padding: 8px 14px; border-radius: var(--radius-sm);
+  font-weight: 700; font-size: 12.5px; text-decoration: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.skip-link:focus { left: 12px; }
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.hidden { display: none !important; }
+.mono { font-family: var(--mono); }
+
+/* Badges semanticas tintadas estilo Codax SCADA */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: 0.25px;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.badge-wait    { background: var(--tint-amber);   color: var(--tint-amber-fg);   border-color: var(--tint-amber-bd); }
+.badge-ok      { background: var(--tint-emerald); color: var(--tint-emerald-fg); border-color: var(--tint-emerald-bd); }
+.badge-off     { background: var(--surface-well); color: var(--text-muted);      border-color: var(--border-raised); }
+.badge-err     { background: var(--tint-rose);    color: var(--tint-rose-fg);    border-color: var(--tint-rose-bd); }
+.badge-tx      { background: var(--tint-cyan);    color: var(--tint-cyan-fg);    border-color: var(--tint-cyan-bd); }
+.badge-indigo  { background: var(--tint-indigo);  color: var(--tint-indigo-fg);  border-color: var(--tint-indigo-bd); }
+.badge-neutral { background: var(--surface-sub);  color: var(--text-muted);      border-color: var(--border-sub); }
+
+/* Botoes tateis com bisel superior e sombra de bancada */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--btn-card-bg);
+  color: var(--text-strong);
+  border: 1px solid var(--border-btn);
+  border-radius: var(--radius-sm);
+  padding: 7px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--sans);
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: var(--btn-card-shadow);
+  transition: transform var(--transition), background var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+.btn:hover {
+  background: var(--btn-card-bg-hover);
+  border-color: var(--border-btn-hover);
+  box-shadow: var(--btn-card-shadow-hover);
+  transform: translateY(-1px);
+}
+.btn:active {
+  transform: translateY(0);
+}
+.btn-primary {
+  background: linear-gradient(180deg, var(--accent-indigo-bright) 0%, var(--accent-indigo) 100%);
+  border-color: rgba(165, 180, 252, 0.45);
+  color: var(--btn-primary-fg, #ffffff);
+  box-shadow: 0 4px 16px -2px rgba(79, 70, 229, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.btn-primary:hover {
+  background: linear-gradient(180deg, #818cf8 0%, #4338ca 100%);
+  border-color: rgba(199, 210, 254, 0.7);
+  box-shadow: 0 6px 22px -2px rgba(99, 102, 241, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.btn-accent {
+  background: linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%);
+  border-color: rgba(192, 132, 252, 0.45);
+  color: #fff;
+}
+.btn-accent:hover {
+  background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%);
+  border-color: rgba(216, 180, 254, 0.7);
+}
+.btn-warn {
+  background: var(--tint-amber);
+  border-color: var(--tint-amber-bd);
+  color: var(--tint-amber-fg);
+}
+.btn-warn:hover {
+  border-color: var(--warn);
+}
+.btn-lg { padding: 11px 20px; font-size: 13.5px; border-radius: var(--radius-md); }
+.btn-sm { padding: 5px 10px; font-size: 11.5px; }
+.btn-xs { padding: 3px 8px; font-size: 11px; font-family: var(--mono); }
+
+/* Animacao Cyberpunk Signal Conduit */
+@keyframes qamFlowDash {
+  from { stroke-dashoffset: 64; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes pulseLive {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.88); }
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok-bright);
+  box-shadow: 0 0 8px var(--ok);
+  animation: pulseLive 1.8s ease-in-out infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.conduit-flow-cyan {
+  stroke: var(--cyan-luminous);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 10 18;
+  animation: qamFlowDash 1.3s linear infinite;
+}
+.conduit-flow-emerald {
+  stroke: var(--ok-bright);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 10 18;
+  animation: qamFlowDash 1.3s linear infinite;
+}
+
+/* Seletor de Tema e Fonte (dropdown compartilhado) */
+.a11y-wrap {
+  position: relative;
+}
+.a11y-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 272px;
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  box-shadow: var(--shadow-overlay);
+  z-index: 120;
+  display: grid;
+  gap: 8px;
+}
+.a11y-section-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.a11y-theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-raised);
+  background: var(--surface-sub);
+  color: var(--text-strong);
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: border-color var(--transition), background var(--transition);
+}
+.a11y-theme-btn:hover { border-color: var(--border-btn-hover); }
+.a11y-theme-btn.active {
+  border-color: var(--focus-ring);
+  background: var(--tint-indigo);
+}
+.a11y-theme-btn strong { display: block; font-size: 12px; }
+.a11y-theme-btn small { display: block; font-size: 10.5px; color: var(--text-muted); }
+.a11y-swatch { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border-strong); flex-shrink: 0; }
+.a11y-swatch.cyber { background: linear-gradient(135deg, #030508, #4f46e5, #22d3ee); }
+.a11y-swatch.scada { background: linear-gradient(135deg, #020305, #ffb000, #22d3ee); }
+.a11y-swatch.light { background: linear-gradient(135deg, #ffffff, #eef2f7, #4f46e5); }
+.a11y-font-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  html { scroll-behavior: auto; }
+}

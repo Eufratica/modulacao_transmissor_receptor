@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4-QAM LAB — Cockpit de Instrumentação SCADA</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='7' fill='%23030508' stroke='%2322d3ee' stroke-width='1.5'/><circle cx='5' cy='5' r='1.6' fill='%2322d3ee'/><circle cx='11' cy='5' r='1.6' fill='%236366f1'/><circle cx='5' cy='11' r='1.6' fill='%2334d399'/><circle cx='11' cy='11' r='1.6' fill='%2322d3ee'/></svg>" />
+  <link rel="stylesheet" href="/static/css/tokens.css?v=pwm3" />
+  <link rel="stylesheet" href="/static/css/lab.css?v=pwm3" />
+</head>
+<body class="lab-body">
+  <a href="#main-workspace" class="skip-link">Pular para a área de instrumentação</a>
+
+  <!-- CABECALHO DUPLO COCKPIT SCADA -->
+  <header class="topbar">
+    <div class="topbar-row1">
+      <div class="topbar-brand">
+        <button id="btn-lab-menu" class="mobile-menu-btn" type="button" aria-label="Alternar menu de módulos" aria-expanded="false">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+
+        <div class="bench-live-pill" aria-label="Estado da bancada">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <div class="bench-live-txt">
+            <strong>BANCADA 4-QAM <span class="badge-mini-live">LIVE</span></strong>
+            <small>Instrumentação ESP32 · ESP-IDF v4.4.8</small>
+          </div>
+        </div>
+
+        <div class="topbar-badges" aria-live="polite">
+          <span id="badge-source" class="badge badge-wait">Aguardando hardware</span>
+          <span id="badge-tx-conn" class="badge badge-off">TX: Desconectado</span>
+          <span id="badge-rx-conn" class="badge badge-off">RX: Desconectado</span>
+          <span id="badge-wire-rate" class="badge badge-neutral">Serial: 0 B/s</span>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button id="btn-cmd-palette" class="btn btn-sm btn-cmd-k" type="button" title="Abrir Paleta de Comandos (Ctrl+K ou Cmd+K)">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--accent-indigo-bright)" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+          <span class="hide-sm">Buscar...</span>
+          <kbd class="kbd-chip">Ctrl K</kbd>
+        </button>
+
+        <div class="a11y-wrap">
+          <button id="btn-a11y-menu" class="btn btn-sm" type="button" aria-haspopup="true" aria-expanded="false" title="Alternar tema e acessibilidade visual">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--cyan-luminous)" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            <span id="a11y-theme-label">Cyber</span>
+          </button>
+          <div id="a11y-popover" class="a11y-popover hidden" role="region" aria-label="Tema visual e tamanho da fonte">
+            <div class="a11y-section-title">Tema do Cockpit</div>
+            <button type="button" class="a11y-theme-btn active" data-set-theme="cyber" aria-pressed="true">
+              <div><strong>Cyber Escuro</strong><small>Obsidian padrão da bancada</small></div>
+              <span class="a11y-swatch cyber" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="a11y-theme-btn" data-set-theme="scada" aria-pressed="false">
+              <div><strong>SCADA Alto Contraste</strong><small>Âmbar e ciano sobre preto</small></div>
+              <span class="a11y-swatch scada" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="a11y-theme-btn" data-set-theme="light" aria-pressed="false">
+              <div><strong>Claro</strong><small>Para bancadas muito iluminadas</small></div>
+              <span class="a11y-swatch light" aria-hidden="true"></span>
+            </button>
+            <div class="a11y-section-title">Escala Tipográfica</div>
+            <div class="a11y-font-row">
+              <button type="button" class="btn btn-xs" data-set-font="sm" aria-pressed="false">A-</button>
+              <button type="button" class="btn btn-xs active" data-set-font="md" aria-pressed="true">A Padrão</button>
+              <button type="button" class="btn btn-xs" data-set-font="lg" aria-pressed="false">A+</button>
+            </div>
+          </div>
+        </div>
+
+        <a href="/" class="btn btn-sm" title="Voltar para a Página Inicial">← Portal</a>
+        <button id="btn-toggle-acq" class="btn btn-sm" type="button">Aquisição: ATIVA</button>
+        <button id="btn-toggle-pause" class="btn btn-sm" type="button">Pausar Visão</button>
+        <button id="btn-clear-plots" class="btn btn-sm btn-warn" type="button">Limpar Gráficos</button>
+        <button id="btn-offline-sim" class="btn btn-sm btn-accent" type="button" title="Simulação offline de protocolo (não representa medição física)">Teste Offline</button>
+      </div>
+    </div>
+
+    <!-- Faixa 2: Telemetry Ticker AO VIVO -->
+    <div class="telemetry-ticker" aria-label="Indicadores rápidos de telemetria">
+      <div class="tick-item"><span class="tick-k">PORTADORA / TAXA:</span> <strong id="tick-fc-baud" class="tick-v">Aguardando hardware</strong></div>
+      <div class="tick-sep" aria-hidden="true">|</div>
+      <div class="tick-item"><span class="tick-k">ADC1 DMA:</span> <strong id="tick-adc" class="tick-v">Aguardando RX</strong></div>
+      <div class="tick-sep" aria-hidden="true">|</div>
+      <div class="tick-item"><span class="tick-k">NÍVEL RX:</span> <strong id="tick-rx-level" class="tick-v">DC — · Vpk —</strong></div>
+      <div class="tick-sep" aria-hidden="true">|</div>
+      <div class="tick-item"><span class="tick-k">SINCRONISMO:</span> <strong id="tick-sync" class="tick-v">df — · Gardner —</strong></div>
+      <div class="tick-sep" aria-hidden="true">|</div>
+      <div class="tick-item"><span class="tick-k">GROUND TRUTH:</span> <strong id="tick-gt" class="tick-v">não calculável</strong></div>
+    </div>
+  </header>
+
+  <div id="banner-offline" class="alert-banner alert-amber hidden" role="status" aria-live="polite">
+    <strong>MODO DE TESTE OFFLINE ATIVO:</strong> Os sinais, símbolos e métricas exibidos agora vêm de simulação de protocolo offline (<code>tools/validar_sistema_e2e.py</code>), <strong>não</strong> de hardware físico ESP32 conectado. Clique em <em>Limpar Gráficos</em> ou conecte as placas COM para sessão real.
+  </div>
+  <div id="banner-mismatch" class="alert-banner alert-red hidden" role="alert" aria-live="assertive">
+    <div class="banner-flex">
+      <span><strong>AVISO DE DIVERGÊNCIA DE MODO TX / RX:</strong> O transmissor e o receptor estão em modos diferentes (TX=<span id="mm-tx"></span> vs. RX=<span id="mm-rx"></span>). Em operação normal entre os dois ESP32, alinhe ambos no Modo 2 ou ambos no Modo 1.</span>
+      <button id="btn-banner-align-m2" type="button" class="btn btn-xs btn-primary">Alinhar TX + RX em Modo 2</button>
+    </div>
+  </div>
+
+  <!-- SHELL COCKPIT: SIDEBAR RETRATIL + WORKSPACE -->
+  <div id="lab-shell" class="lab-shell">
+    <aside id="lab-sidebar" class="lab-sidebar" aria-label="Menu principal de instrumentação">
+      <div class="sidebar-brand">
+        <a href="/" class="brand-lockup" title="Voltar para a Página Inicial do 4-QAM LAB">
+          <div class="brand-emblem" aria-hidden="true">
+            <svg viewBox="0 0 28 28" width="22" height="22">
+              <circle cx="8" cy="8" r="2.6" fill="#22d3ee"/>
+              <circle cx="20" cy="8" r="2.6" fill="#6366f1"/>
+              <circle cx="8" cy="20" r="2.6" fill="#34d399"/>
+              <circle cx="20" cy="20" r="2.6" fill="#22d3ee"/>
+              <path d="M 3 14 Q 8.5 5, 14 14 T 25 14" fill="none" stroke="#22d3ee" stroke-width="1.6"/>
+            </svg>
+            <span class="emblem-ping"></span>
+          </div>
+          <div class="brand-text sidebar-hide-on-collapse">
+            <div class="brand-title-row">
+              <h1>4-QAM</h1>
+              <span class="brand-ver">LAB 2.0</span>
+            </div>
+            <span class="brand-sub">ESP32 SCADA · DSP</span>
+          </div>
+        </a>
+        <button id="btn-sidebar-collapse" class="collapse-btn" type="button" title="Recolher / Expandir barra lateral" aria-label="Recolher ou expandir barra lateral" aria-expanded="true">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M16 15l-3-3 3-3"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="sidebar-group-title sidebar-hide-on-collapse">MENU PRINCIPAL</div>
+      <nav class="tabbar" role="tablist" aria-orientation="vertical">
+        <button id="nav-tab-overview" class="tab active" data-tab="overview" role="tab" aria-selected="true" aria-controls="tab-overview" title="Visão Geral e Hardware">
+          <span class="tab-left">
+            <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span class="tab-label">Visão Geral &amp; Hardware</span>
+          </span>
+          <span class="tab-tag">COM</span>
+        </button>
+        <button id="nav-tab-scope" class="tab" data-tab="scope" role="tab" aria-selected="false" aria-controls="tab-scope" title="Osciloscópio Digital">
+          <span class="tab-left">
+            <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12h3l2.5-6 3.5 12 3.5-9 2 3H22"/></svg>
+            <span class="tab-label">Osciloscópio Digital</span>
+          </span>
+          <span class="tab-tag">20kHz</span>
+        </button>
+        <button id="nav-tab-constellation" class="tab" data-tab="constellation" role="tab" aria-selected="false" aria-controls="tab-constellation" title="Constelação 4-QAM">
+          <span class="tab-left">
+            <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke-dasharray="3 2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/></svg>
+            <span class="tab-label">Constelação 4-QAM</span>
+          </span>
+          <span class="tab-tag">I/Q</span>
+        </button>
+        <button id="nav-tab-digital" class="tab" data-tab="digital" role="tab" aria-selected="false" aria-controls="tab-digital" title="Análise Digital e Ground Truth">
+          <span class="tab-left">
+            <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h6v10h4V7h6"/><path d="M9 12l2 2 4-4"/></svg>
+            <span class="tab-label">Análise Digital &amp; Truth</span>
+          </span>
+          <span class="tab-tag">GT</span>
+        </button>
+        <button id="nav-tab-dsp" class="tab" data-tab="dsp" role="tab" aria-selected="false" aria-controls="tab-dsp" title="Laboratório DSP">
+          <span class="tab-left">
+            <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M19.1 4.9l-2.8 2.8M7.7 16.3l-2.8 2.8"/></svg>
+            <span class="tab-label">Laboratório DSP</span>
+          </span>
+          <span class="tab-tag">PI</span>
+        </button>
+        <button id="nav-tab-spectrum" class="tab" data-tab="spectrum" role="tab" aria-selected="false" aria-controls="tab-spectrum" title="Analisador de Espectro FFT">
+          <span class="tab-left">
+            <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 20h18"/><path d="M5 20v-4M9 20V8M13 20v-7M17 20V5M20 20v-2"/></svg>
+            <span class="tab-label">Analisador FFT</span>
+          </span>
+          <span class="tab-tag">FFT</span>
+        </button>
+        <button id="nav-tab-filters" class="tab" data-tab="filters" role="tab" aria-selected="false" aria-controls="tab-filters" title="Filtros RC Analógicos">
+          <span class="tab-left">
+            <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 7h10c3 0 4 10 8 10"/></svg>
+            <span class="tab-label">Filtros RC Analógicos</span>
+          </span>
+          <span class="tab-tag">BODE</span>
+        </button>
+        <button id="nav-tab-math" class="tab" data-tab="math" role="tab" aria-selected="false" aria-controls="tab-math" title="Fundamentos Matemáticos">
+          <span class="tab-left">
+            <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M18 5H7l5 7-5 7h11"/></svg>
+            <span class="tab-label">Fundamentos Matemáticos</span>
+          </span>
+          <span class="tab-tag">EQ</span>
+        </button>
+        <button id="nav-tab-history" class="tab" data-tab="history" role="tab" aria-selected="false" aria-controls="tab-history" title="Histórico e Exportação">
+          <span class="tab-left">
+            <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            <span class="tab-label">Histórico &amp; Exportação</span>
+          </span>
+          <span class="tab-tag">CSV</span>
+        </button>
+      </nav>
+
+      <!-- Mini-feed "Ultimos Retornos" inspirado no cockpit Codax Mesh -->
+      <div class="sidebar-returns sidebar-hide-on-collapse">
+        <div class="sidebar-returns-hdr">
+          <span>ÚLTIMOS RETORNOS</span>
+          <button id="btn-jump-console" type="button" class="mini-link-btn">Console →</button>
+        </div>
+        <div id="sidebar-mini-events" class="mini-events-list">
+          <div class="mini-ev-empty">Aguardando eventos seriais...</div>
+        </div>
+      </div>
+
+      <div class="sidebar-foot sidebar-hide-on-collapse">
+        <span class="sidebar-note">Protocolo 4QAM-TLM v1</span>
+        <a href="/#arquitetura" class="sidebar-home-link">Ver Arquitetura no Portal →</a>
+      </div>
+    </aside>
+
+    <main id="main-workspace" class="workspace" tabindex="-1">
+      <!-- ABA 1: VISAO GERAL, DIAGNOSTICO, MACROS E BANCADA TACTIL -->
+      <section id="tab-overview" class="tab-panel active" role="tabpanel" aria-labelledby="nav-tab-overview">
+        <!-- Card 1: Diagnostico Preventivo TX <-> RX & Saude ADC -->
+        <article class="card diag-card mb-md">
+          <div class="diag-body">
+            <div class="diag-left">
+              <div class="diag-ico-box" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--ok-bright)" stroke-width="2"><path d="M12 2l7 4v6c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-4z"/><path d="M9 12l2 2 4-4"/></svg>
+              </div>
+              <div>
+                <div class="diag-title-row">
+                  <h2>DIAGNÓSTICO PREVENTIVO: ENLACE TX ↔ RX &amp; SAÚDE ADC/DMA</h2>
+                  <span id="diag-overall-badge" class="badge badge-wait">Aguardando placas</span>
+                </div>
+                <p id="diag-overall-desc" class="hint">Monitoramento contínuo da integridade serial 4QAM-TLM v1, eFuse ADC1 DMA e alinhamento de protocolo Modo 1 / Modo 2 entre TX e RX.</p>
+              </div>
+            </div>
+            <div class="diag-actions">
+              <button id="btn-align-mode2" type="button" class="btn btn-sm btn-primary">Alinhar TX+RX Modo 2</button>
+              <button id="btn-align-mode1" type="button" class="btn btn-sm">Alinhar Modo 1</button>
+            </div>
+          </div>
+          <div id="diag-health-grid" class="diag-health-grid"></div>
+        </article>
+
+        <!-- Card 2: Macros de Bancada (Bateria em 1 Clique) -->
+        <article class="card mb-md">
+          <div class="card-hdr">
+            <div class="row gap-sm">
+              <h2>MACROS DE BANCADA (BATERIA REAL EM 1 CLIQUE)</h2>
+              <span class="badge badge-indigo">Diagnóstico Sequencial</span>
+            </div>
+            <button id="btn-run-macro" type="button" class="btn btn-primary btn-sm">▶ Executar Bateria Real</button>
+          </div>
+          <p class="hint">Executa sequencialmente <code>/selftest TX</code> → <code>/selftest RX</code> → <code>/status TX+RX</code> → <code>/cap ADC 20kHz</code> apenas nas placas conectadas.</p>
+          <div id="macro-steps" class="macro-steps">
+            <div class="macro-step" data-step="0"><span>1. Auto-Teste TX</span><strong id="macro-s0">Pendente</strong></div>
+            <div class="macro-step" data-step="1"><span>2. Auto-Teste RX</span><strong id="macro-s1">Pendente</strong></div>
+            <div class="macro-step" data-step="2"><span>3. Status TX &amp; RX</span><strong id="macro-s2">Pendente</strong></div>
+            <div class="macro-step" data-step="3"><span>4. Captura ADC /cap</span><strong id="macro-s3">Pendente</strong></div>
+          </div>
+        </article>
+
+        <!-- Grade 3 Colunas: COMs + TX Status + RX Status -->
+        <div class="grid-3">
+          <article class="card">
+            <div class="card-hdr">
+              <h2>Conexões de Hardware (Portas COM)</h2>
+              <button id="btn-refresh-ports" class="btn btn-xs" type="button">Atualizar COMs</button>
+            </div>
+            <p class="hint">Controle exclusivo por placa. Feche outros monitores seriais (PuTTY / <code>idf.py monitor</code>) antes de conectar. Nunca há flash automático.</p>
+
+            <div class="conn-box">
+              <h3>Transmissor ESP32 (TX · GPIO 18)</h3>
+              <div class="row">
+                <label for="sel-tx-port" class="sr-only">Porta COM do Transmissor</label>
+                <select id="sel-tx-port"></select>
+                <label for="sel-tx-baud" class="sr-only">Baudrate do Transmissor</label>
+                <select id="sel-tx-baud">
+                  <option value="115200" selected>115200 bps</option>
+                  <option value="230400">230400 bps</option>
+                  <option value="460800">460800 bps</option>
+                </select>
+                <button id="btn-tx-conn" class="btn btn-primary btn-sm" type="button">Conectar TX</button>
+              </div>
+              <div id="tx-conn-info" class="meta-line">Estado: Desconectado</div>
+            </div>
+
+            <div class="conn-box">
+              <h3>Receptor ESP32 (RX · GPIO 34)</h3>
+              <div class="row">
+                <label for="sel-rx-port" class="sr-only">Porta COM do Receptor</label>
+                <select id="sel-rx-port"></select>
+                <label for="sel-rx-baud" class="sr-only">Baudrate do Receptor</label>
+                <select id="sel-rx-baud">
+                  <option value="115200" selected>115200 bps</option>
+                  <option value="230400">230400 bps</option>
+                  <option value="460800">460800 bps</option>
+                </select>
+                <button id="btn-rx-conn" class="btn btn-primary btn-sm" type="button">Conectar RX</button>
+              </div>
+              <div id="rx-conn-info" class="meta-line">Estado: Desconectado</div>
+            </div>
+            <div id="conn-error" class="error-box hidden" role="alert"></div>
+          </article>
+
+          <article class="card">
+            <div class="card-hdr">
+              <h2>Estado do Transmissor (TX)</h2>
+              <div class="row gap-xs">
+                <button id="btn-jump-pwm" class="btn btn-xs" type="button" title="Abrir Osciloscópio com camada PWM GPIO 18">Ver PWM (GPIO 18) →</button>
+                <span id="ov-tx-badge" class="badge badge-wait">Aguardando</span>
+              </div>
+            </div>
+            <div id="ov-tx-grid" class="kv-grid"></div>
+          </article>
+
+          <article class="card">
+            <div class="card-hdr">
+              <h2>Estado do Receptor (RX)</h2>
+              <span id="ov-rx-badge" class="badge badge-wait">Aguardando</span>
+            </div>
+            <div id="ov-rx-grid" class="kv-grid"></div>
+          </article>
+        </div>
+
+        <!-- Grade 2 Colunas: Canal & Operacoes Tateis + Console UART -->
+        <div class="grid-2">
+          <article class="card">
+            <div class="card-hdr">
+              <h2>Canal &amp; Operações Táteis de Bancada</h2>
+            </div>
+            <div id="ov-channel-grid" class="kv-grid"></div>
+
+            <hr class="sep" />
+            <h3>Envio de Mensagem &amp; CLI Confirmada no Firmware</h3>
+            <div class="row">
+              <label for="inp-tx-msg" class="sr-only">Texto ASCII para transmitir no TX</label>
+              <input id="inp-tx-msg" type="text" maxlength="240" placeholder="Digite o texto ASCII para transmitir no TX..." />
+              <button id="btn-send-msg" class="btn btn-primary" type="button">Transmitir Texto</button>
+            </div>
+            <div class="row wrap gap-xs mt-sm">
+              <label for="cmd-target" class="sr-only">Alvo do comando CLI</label>
+              <select id="cmd-target">
+                <option value="tx">Alvo: TX</option>
+                <option value="rx">Alvo: RX</option>
+              </select>
+              <label for="inp-raw-cmd" class="sr-only">Comando CLI direto</label>
+              <input id="inp-raw-cmd" type="text" placeholder="Ex: /baud 100 | /map natural | /qsign plus | /mode 2" />
+              <button id="btn-send-cmd" class="btn btn-sm" type="button">Enviar Comando</button>
+            </div>
+            <div id="cmd-preview" class="cmd-preview" aria-live="polite">Pré-visualização de comando: selecione ou digite acima (somente comandos confirmados no C são permitidos).</div>
+
+            <h3 class="mt-md">Diagnóstico &amp; Reconhecimento Rápido</h3>
+            <div class="action-tiles">
+              <button type="button" class="action-tile" data-role="tx" data-cmd="/status">
+                <span class="tile-cat cat-cyan">QUERY TX</span><strong>/status TX</strong><small>Configuração e contadores PWM/LUT</small>
+              </button>
+              <button type="button" class="action-tile" data-role="rx" data-cmd="/status">
+                <span class="tile-cat cat-emerald">QUERY RX</span><strong>/status RX</strong><small>ADC1 DMA, DC, Vpk e Costas/Gardner</small>
+              </button>
+              <button type="button" class="action-tile" data-role="tx" data-cmd="/selftest">
+                <span class="tile-cat cat-cyan">SELFTEST TX</span><strong>/selftest TX</strong><small>DFT portadora, ortogonalidade e CRC</small>
+              </button>
+              <button type="button" class="action-tile" data-role="rx" data-cmd="/selftest">
+                <span class="tile-cat cat-emerald">SELFTEST RX</span><strong>/selftest RX</strong><small>3 ensaios malha fechada Costas+Gardner</small>
+              </button>
+              <button type="button" class="action-tile" data-role="rx" data-cmd="/cap">
+                <span class="tile-cat cat-indigo">CAPTURA 20k</span><strong>/cap ADC 20kHz</strong><small>Snapshot 2048 pts p/ FFT e Osciloscópio</small>
+              </button>
+              <button type="button" class="action-tile" data-role="tx" data-cmd="/cap">
+                <span class="tile-cat cat-indigo">PWM SNAP</span><strong>/cap TX</strong><small>Captura saída gerada no modulador</small>
+              </button>
+            </div>
+
+            <h3 class="mt-md">Operações de Modulação, Modo &amp; Constelação</h3>
+            <div class="action-tiles action-tiles-compact">
+              <button type="button" class="action-tile" data-role="tx" data-cmd="/mode 2"><span class="tile-cat cat-amber">TX MODO</span><strong>/mode 2</strong><small>Quadro + Sync + CRC</small></button>
+              <button type="button" class="action-tile" data-role="tx" data-cmd="/mode 1"><span class="tile-cat cat-amber">TX MODO</span><strong>/mode 1</strong><small>Fluxo ASCII direto</small></button>
+              <button type="button" class="action-tile" data-role="rx" data-cmd="/mode 2"><span class="tile-cat cat-emerald">RX MODO</span><strong>/mode 2</strong><small>Sync Word + CRC-16</small></button>
+              <button type="button" class="action-tile" data-role="rx" data-cmd="/mode 1"><span class="tile-cat cat-emerald">RX MODO</span><strong>/mode 1</strong><small>Demodulação direta</small></button>
+              <button type="button" class="action-tile" data-role="tx" data-cmd="/map natural"><span class="tile-cat cat-cyan">MAP TX</span><strong>/map natural</strong><small>Tabela Natural 0..3</small></button>
+              <button type="button" class="action-tile" data-role="tx" data-cmd="/map gray"><span class="tile-cat cat-cyan">MAP TX</span><strong>/map gray</strong><small>Adjacência Gray 1-bit</small></button>
+              <button type="button" class="action-tile" data-role="rx" data-cmd="/map natural"><span class="tile-cat cat-emerald">MAP RX</span><strong>/map natural</strong><small>Alinha tabela Natural</small></button>
+              <button type="button" class="action-tile" data-role="tx" data-cmd="/qsign plus"><span class="tile-cat cat-indigo">QUAD TX</span><strong>/qsign plus</strong><small>+cos(ωt-90°) (+sin)</small></button>
+              <button type="button" class="action-tile" data-role="tx" data-cmd="/qsign minus"><span class="tile-cat cat-indigo">QUAD TX</span><strong>/qsign minus</strong><small>-sin(ωt)</small></button>
+              <button type="button" class="action-tile" data-role="tx" data-cmd="/baud 100"><span class="tile-cat cat-amber">TAXA TX</span><strong>/baud 100</strong><small>100 baud (200 bps)</small></button>
+              <button type="button" class="action-tile" data-role="rx" data-cmd="/baud 100"><span class="tile-cat cat-emerald">TAXA RX</span><strong>/baud 100</strong><small>Casa RX em 100 baud</small></button>
+              <button type="button" class="action-tile" data-role="rx" data-cmd="/adcstream 10"><span class="tile-cat cat-indigo">STREAM</span><strong>/adcstream 10</strong><small>Decimação 10× (2k Sa/s)</small></button>
+              <button type="button" class="action-tile" data-role="tx" data-cmd="/test carrier"><span class="tile-cat cat-purple">TESTE TX</span><strong>/test carrier</strong><small>Portadora pura 1 kHz</small></button>
+              <button type="button" class="action-tile" data-role="tx" data-cmd="/test cycle"><span class="tile-cat cat-purple">TESTE TX</span><strong>/test cycle</strong><small>Ciclo contínuo 00→11</small></button>
+              <button type="button" class="action-tile" data-role="tx" data-cmd="/test text 3"><span class="tile-cat cat-purple">TESTE TX</span><strong>/test text 3</strong><small>Rajada 3 quadros</small></button>
+              <button type="button" class="action-tile" data-role="tx" data-cmd="/test stop"><span class="tile-cat cat-rose">PARAR</span><strong>/test stop</strong><small>Retorna ao idle DC</small></button>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-hdr">
+              <h2>Registro de Comandos e Console UART (TX &amp; RX)</h2>
+              <span id="ov-loss-badge" class="badge badge-neutral">Perda pacotes: 0</span>
+            </div>
+            <div id="cli-console" class="console-log" role="log" aria-live="polite" aria-label="Console UART ao vivo">Aguardando conexão serial com os ESP32...</div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ABA 2: OSCILOSCOPIO DIGITAL -->
+      <section id="tab-scope" class="tab-panel" role="tabpanel" aria-labelledby="nav-tab-scope">
+        <article class="card">
+          <div class="card-hdr">
+            <h2>Osciloscópio Digital — Domínio do Tempo, Portadora, Banda Base &amp; RX</h2>
+            <div class="row gap-xs">
+              <span id="scope-source-badge" class="badge badge-wait">Sem amostras</span>
+              <button id="btn-scope-preset-mod" class="btn btn-xs btn-primary" type="button" title="Visualizar Banda Base I/Q + Portadora 1 kHz + Seno Modulado 4-QAM">Modulação (BB+Portadora+Seno)</button>
+              <button id="btn-scope-pwm-cap" class="btn btn-xs" type="button" data-role="tx" data-cmd="/cap">PWM TX (/cap)</button>
+              <button id="btn-scope-cap" class="btn btn-xs" type="button" data-role="rx" data-cmd="/cap">ADC RX (/cap)</button>
+              <button id="btn-scope-reset-zoom" class="btn btn-xs" type="button">Reset Zoom</button>
+            </div>
+          </div>
+          <div class="toolbar">
+            <label><input type="checkbox" id="chk-scope-raw" checked /> 1. ADC Bruto (mV)</label>
+            <label><input type="checkbox" id="chk-scope-ac" /> 2. Sem Offset DC (AC)</label>
+            <label><input type="checkbox" id="chk-scope-filt" /> 3. Envoltória / Média móvel (pós-aquisição)</label>
+            <label><input type="checkbox" id="chk-scope-ref" checked /> 4. Referência Teórica TX (Seno 4-QAM)</label>
+            <label><input type="checkbox" id="chk-scope-diff" /> 5. Diferença (RX alinhado - Ref)</label>
+            <label><input type="checkbox" id="chk-scope-pwm" /> 6. Envelope Médio PWM TX (duty × 3,3V)</label>
+            <label><input type="checkbox" id="chk-scope-carrier" /> 7. Portadora Pura (cos 1 kHz)</label>
+            <label><input type="checkbox" id="chk-scope-bb" /> 8. Banda Base I(t), Q(t) (símbolos)</label>
+            <label>Janela:
+              <select id="sel-scope-win">
+                <option value="all">Tudo</option>
+                <option value="0.25">0.25 ms (pulsos PWM 80 kHz)</option>
+                <option value="0.5">0.5 ms (pulsos PWM)</option>
+                <option value="2">2 ms (portadora + PWM)</option>
+                <option value="10">10 ms (1 símb)</option>
+                <option value="25">25 ms</option>
+                <option value="50">50 ms</option>
+                <option value="100" selected>100 ms</option>
+              </select>
+            </label>
+            <label>Eixo X:
+              <select id="sel-scope-xaxis">
+                <option value="ms">Tempo (ms)</option>
+                <option value="idx">Índice de amostra</option>
+              </select>
+            </label>
+            <label><input type="checkbox" id="chk-scope-align" /> Alinhar Ref em tempo/ganho</label>
+          </div>
+          <div class="canvas-wrap resizable">
+            <canvas id="canvas-scope" aria-label="Gráfico do osciloscópio no domínio do tempo"></canvas>
+          </div>
+          <div id="scope-metrics" class="metrics-strip">Aguardando amostras reais do ADC1...</div>
+        </article>
+
+        <article id="pwm-scope-card" class="card mt-md">
+          <div class="card-hdr">
+            <div>
+              <h2>Saída Física no Pino GPIO 18 (TX) — Onda Quadrada PWM 80 kHz (0 V ↔ 3,30 V)</h2>
+              <p class="hint">Sinal digital MCPWM0A gerado pelo ESP32 antes do filtro RC: a frequência é fixa em 80 kHz e a largura do pulso (duty cycle) modula a senoide de 1 kHz.</p>
+            </div>
+            <div class="row gap-xs">
+              <span id="pwm-scope-badge" class="badge badge-wait">Aguardando /cap TX</span>
+              <button id="btn-pwm-cap-2" class="btn btn-xs btn-primary" type="button" data-role="tx" data-cmd="/cap">Capturar PWM TX (/cap)</button>
+            </div>
+          </div>
+          <div class="toolbar">
+            <label>Zoom PWM:
+              <select id="sel-pwm-win">
+                <option value="0.25">0.25 ms (~20 pulsos 80 kHz)</option>
+                <option value="0.4" selected>0.40 ms (~32 pulsos 80 kHz)</option>
+                <option value="0.8">0.80 ms (~64 pulsos 80 kHz)</option>
+                <option value="1.5">1.50 ms (~120 pulsos)</option>
+              </select>
+            </label>
+            <label>Posição na captura:
+              <input id="rng-pwm-offset" type="range" min="0" max="12" step="0.2" value="0" />
+              <span id="lbl-pwm-offset" class="mono">0.0 ms</span>
+            </label>
+            <label><input type="checkbox" id="chk-pwm-avg" checked /> Mostrar média instantânea (senoide duty × 3,3V)</label>
+          </div>
+          <div class="canvas-wrap" style="height:255px;min-height:230px">
+            <canvas id="canvas-pwm-scope" aria-label="Gráfico da onda quadrada PWM de 80 kHz no pino GPIO 18"></canvas>
+          </div>
+          <div id="pwm-scope-metrics" class="metrics-strip">Aguardando captura /cap do TX (GPIO 18)...</div>
+        </article>
+      </section>
+
+      <!-- ABA 3: CONSTELACAO 4-QAM -->
+      <section id="tab-constellation" class="tab-panel" role="tabpanel" aria-labelledby="nav-tab-constellation">
+        <div class="grid-2-uneven">
+          <article class="card">
+            <div class="card-hdr">
+              <h2>Diagrama de Constelação 4-QAM</h2>
+              <label for="sel-const-stage" class="sr-only">Estágio da constelação</label>
+              <select id="sel-const-stage">
+                <option value="final" selected>Pós-Costas + Rotação Resolvida (Decisão Final)</option>
+                <option value="costas">Pós-Costas (Antes da Rotação de Quadrante)</option>
+                <option value="mid">Pontos Médios Pós-Boxcar (Pré-Integrador)</option>
+              </select>
+            </div>
+            <div class="canvas-wrap square-box">
+              <canvas id="canvas-const" aria-label="Diagrama de constelação 4-QAM"></canvas>
+            </div>
+          </article>
+          <article class="card">
+            <h2>Parâmetros Geométricos e Dispersão Real</h2>
+            <div id="const-info" class="kv-grid"></div>
+            <h3 class="mt-md">Tabela Ativa do Firmware</h3>
+            <table class="data-table" id="tbl-const-map">
+              <thead><tr><th>Símbolo</th><th>Bits</th><th>I ideal</th><th>Q ideal</th><th>Plano IQ</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </article>
+        </div>
+      </section>
+
+      <!-- ABA 4: ANALISE DIGITAL & GROUND TRUTH -->
+      <section id="tab-digital" class="tab-panel" role="tabpanel" aria-labelledby="nav-tab-digital">
+        <article class="card">
+          <div class="card-hdr">
+            <h2>Ground Truth — Esperado vs. Resultado Real</h2>
+            <span id="gt-badge" class="badge badge-wait">Aguardando par TX/RX</span>
+          </div>
+          <div id="gt-summary" class="gt-cards"></div>
+          <p id="gt-note" class="hint mt-xs">CRC OK valida consistência interna do quadro recebido (cabeçalho+payload), mas não substitui comparação bit-a-bit contra o payload transmitido quando disponível.</p>
+        </article>
+
+        <article class="card mt-md">
+          <div class="card-hdr">
+            <h2>Cadeia Digital Completa Rastreável (TX → Canal → RX)</h2>
+            <span class="hint">Clique em qualquer linha da tabela para destacar o símbolo correspondente no Osciloscópio e Constelação.</span>
+          </div>
+          <div id="digital-pipeline" class="pipeline-strip"></div>
+          <div class="table-scroll">
+            <table class="data-table" id="tbl-digital-chain">
+              <thead>
+                <tr>
+                  <th>Índice</th><th>Byte Orig.</th><th>Bits TX</th><th>Símb. Esp.</th>
+                  <th>I Esp.</th><th>Q Esp.</th><th>I Rec.</th><th>Q Rec.</th><th>Decisão</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <!-- ABA 5: LABORATORIO DSP -->
+      <section id="tab-dsp" class="tab-panel" role="tabpanel" aria-labelledby="nav-tab-dsp">
+        <div class="grid-2">
+          <article class="card">
+            <div class="card-hdr">
+              <h2>Costas Loop PI (Sincronismo de Portadora)</h2>
+              <span class="badge badge-tx">qam_demod.c:211-235</span>
+            </div>
+            <div class="canvas-wrap small-chart"><canvas id="canvas-costas" aria-label="Curvas do Costas Loop PI"></canvas></div>
+            <p class="formula-inline" id="costas-eq-box"></p>
+          </article>
+          <article class="card">
+            <div class="card-hdr">
+              <h2>Gardner TED (Temporização · Fronteira bnd_i_curr)</h2>
+              <span class="badge badge-indigo">qam_demod.c:242-304</span>
+            </div>
+            <div class="canvas-wrap small-chart"><canvas id="canvas-gardner" aria-label="Curvas do detector Gardner TED"></canvas></div>
+            <p class="formula-inline">
+              <code>e_tau = (mid_i_curr - mid_i_prev) * bnd_i_curr + (mid_q_curr - mid_q_prev) * bnd_q_curr</code><br/>
+              Usa explicitamente a amostra da fronteira intermediária <code>bnd_*_curr</code> entre <code>mid_*_prev</code> e <code>mid_*_curr</code> (correção documentada). Kp=0,030, Ki=0,0015 (±2%).
+            </p>
+          </article>
+        </div>
+        <div class="grid-2 mt-md">
+          <article class="card">
+            <h2>Histórico de Sincronização (Preâmbulo / Sync Word / Rotação)</h2>
+            <div class="table-scroll small-tbl">
+              <table class="data-table" id="tbl-sync-events">
+                <thead><tr><th>Hora</th><th>Evento</th><th>Rajada</th><th>Rotação</th><th>df (Hz)</th><th>Baud</th><th>CRC</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+          <article class="card">
+            <h2>Verificador CRC-16/CCITT-FALSE</h2>
+            <div id="dsp-crc-panel" class="kv-grid"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ABA 6: ANALISADOR DE ESPECTRO FFT -->
+      <section id="tab-spectrum" class="tab-panel" role="tabpanel" aria-labelledby="nav-tab-spectrum">
+        <article class="card">
+          <div class="card-hdr">
+            <h2>Analisador de Espectro FFT (Somente Amostras Reais do ADC)</h2>
+            <div class="row gap-xs">
+              <label for="sel-fft-win" class="sr-only">Janela da FFT</label>
+              <select id="sel-fft-win">
+                <option value="hann" selected>Janela Hann</option>
+                <option value="hamming">Janela Hamming</option>
+                <option value="rect">Retangular</option>
+              </select>
+              <label>Fmax (Hz): <input id="inp-fft-fmax" type="number" value="5000" min="500" max="40000" step="500" style="width:86px"/></label>
+              <button id="btn-fft-run" class="btn btn-primary btn-sm" type="button">Calcular FFT Real</button>
+            </div>
+          </div>
+          <div class="canvas-wrap"><canvas id="canvas-fft" aria-label="Gráfico do espectro FFT"></canvas></div>
+          <div id="fft-metrics" class="metrics-strip">Clique em "Calcular FFT Real" após adquirir amostras do ADC1.</div>
+        </article>
+      </section>
+
+      <!-- ABA 7: LABORATORIO DE FILTROS RC -->
+      <section id="tab-filters" class="tab-panel" role="tabpanel" aria-labelledby="nav-tab-filters">
+        <article class="card">
+          <div class="card-hdr">
+            <h2>Laboratório do Filtro Analógico Passa-Baixas RC 2ª Ordem (Modelo Teórico Interativo)</h2>
+            <button id="btn-rc-reset" class="btn btn-xs" type="button">Restaurar Valores do Projeto (1k/33nF + 10k/3,3nF)</button>
+          </div>
+          <p class="hint"><strong>Importante:</strong> Alterar R1, C1, R2 ou C2 modifica apenas a curva teórica acoplada calculada abaixo. Não altera o circuito físico na bancada nem parâmetros do firmware.</p>
+          <div class="grid-2-uneven">
+            <div>
+              <div id="svg-rc-wrap" class="svg-schematic"></div>
+              <div class="rc-controls">
+                <label>R1 (Ω) <input id="rc-r1" type="number" value="1000" min="10" step="100" /></label>
+                <label>C1 (nF) <input id="rc-c1" type="number" value="33" min="0.1" step="1" /></label>
+                <label>R2 (Ω) <input id="rc-r2" type="number" value="10000" min="10" step="500" /></label>
+                <label>C2 (nF) <input id="rc-c2" type="number" value="3.3" min="0.1" step="0.1" /></label>
+                <label>f_PWM (Hz) <input id="rc-fpwm" type="number" value="80000" min="1000" step="1000" /></label>
+                <label>fc (Hz) <input id="rc-fc" type="number" value="1000" min="50" step="50" /></label>
+              </div>
+              <div id="rc-stats" class="kv-grid mt-sm"></div>
+            </div>
+            <div>
+              <div class="canvas-wrap small-chart"><canvas id="canvas-bode-mag" aria-label="Diagrama de Bode de Magnitude"></canvas></div>
+              <div class="canvas-wrap small-chart mt-sm"><canvas id="canvas-bode-phase" aria-label="Diagrama de Bode de Fase"></canvas></div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- ABA 8: FUNDAMENTOS MATEMATICOS -->
+      <section id="tab-math" class="tab-panel" role="tabpanel" aria-labelledby="nav-tab-math">
+        <div id="math-cards" class="math-grid"></div>
+      </section>
+
+      <!-- ABA 9: HISTORICO E EXPORTACAO -->
+      <section id="tab-history" class="tab-panel" role="tabpanel" aria-labelledby="nav-tab-history">
+        <div class="grid-2">
+          <article class="card">
+            <div class="card-hdr">
+              <h2>Salvar Sessão &amp; Exportação Local</h2>
+            </div>
+            <div class="row gap-xs">
+              <label for="inp-sess-name" class="sr-only">Nome da sessão experimental</label>
+              <input id="inp-sess-name" type="text" placeholder="Nome do experimento (ex: Bancada_100baud)" />
+              <button id="btn-save-sess" class="btn btn-primary btn-sm" type="button">Salvar Sessão Local</button>
+            </div>
+            <div class="row wrap gap-xs mt-md">
+              <a class="btn btn-sm" href="/api/export/json">Exportar Sessão (JSON)</a>
+              <a class="btn btn-sm" href="/api/export/csv?kind=ground_truth">Exportar Ground Truth (CSV)</a>
+              <a class="btn btn-sm" href="/api/export/csv?kind=adc">Exportar Amostras ADC (CSV)</a>
+              <a class="btn btn-sm" href="/api/export/csv?kind=dsp_symbols">Exportar Símbolos DSP (CSV)</a>
+              <button id="btn-print-report" class="btn btn-sm btn-accent" type="button">Gerar Relatório HTML / PDF</button>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-hdr">
+              <h2>Sessões Salvas (Comparação Lado a Lado)</h2>
+              <button id="btn-refresh-sess" class="btn btn-xs" type="button">Atualizar Lista</button>
+            </div>
+            <div class="table-scroll small-tbl">
+              <table class="data-table" id="tbl-sessions">
+                <thead><tr><th>ID</th><th>Data</th><th>Fonte</th><th>TX</th><th>RX</th><th>ADC</th><th>Ações</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+        <article class="card mt-md">
+          <h2>Comparação entre Sessões Selecionadas</h2>
+          <div id="session-compare" class="hint">Selecione duas sessões na tabela acima ("Comparar A" e "Comparar B") para comparar parâmetros e desempenho lado a lado.</div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL COMMAND PALETTE (CTRL + K) -->
+  <div id="cmd-palette" class="cmd-modal hidden" role="dialog" aria-modal="true" aria-labelledby="cmd-palette-title">
+    <div class="cmd-backdrop" id="cmd-backdrop"></div>
+    <div class="cmd-dialog">
+      <div class="cmd-input-row">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--accent-indigo-bright)" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        <label id="cmd-palette-title" for="cmd-palette-input" class="sr-only">Paleta de comandos rápidos do 4-QAM LAB</label>
+        <input id="cmd-palette-input" type="text" placeholder="Ir para aba, executar /selftest, alternar tema ou simular offline..." autocomplete="off" />
+        <button id="btn-cmd-close" type="button" class="btn btn-xs">ESC</button>
+      </div>
+      <div id="cmd-palette-list" class="cmd-results" role="listbox"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/static/js/main.js?v=pwm3"></script>
+</body>
+</html>

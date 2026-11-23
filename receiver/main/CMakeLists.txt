@@ -1,0 +1,11 @@
+idf_component_register(SRCS "receiver.c"
+                            "rx_config.c"
+                            "rx_mapper.c"
+                            "qam_demod.c"
+                            "rx_deframer.c"
+                            "adc_sampler.c"
+                            "rx_engine.c"
+                            "rx_telem.c"
+                            "rx_selftest.c"
+                            "rx_cli.c"
+                       INCLUDE_DIRS ".")

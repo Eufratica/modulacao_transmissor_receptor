@@ -1,0 +1,22 @@
+# ESP-IDF build artifacts
+**/build/
+sdkconfig.old
+managed_components/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# IDE & OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Runtime / temporary local artifacts
+platform/sessions/
+platform/tests/_tmp_sessions/
+*.log
+veja.png
+Captura de tela *.png

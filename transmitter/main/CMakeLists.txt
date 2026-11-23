@@ -1,0 +1,11 @@
+idf_component_register(SRCS "transmitter.c"
+                            "qam_config.c"
+                            "qam_mapper.c"
+                            "qam_framer.c"
+                            "qam_modulator.c"
+                            "pwm_driver.c"
+                            "tx_engine.c"
+                            "tx_telem.c"
+                            "qam_selftest.c"
+                            "uart_cli.c"
+                       INCLUDE_DIRS ".")
